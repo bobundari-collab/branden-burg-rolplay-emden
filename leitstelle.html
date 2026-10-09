@@ -26,7 +26,6 @@ textarea{resize:vertical;min-height:65px}
 button{background:var(--blue);color:white;border:0;border-radius:7px;padding:11px 14px;font-weight:bold;cursor:pointer}
 button:hover{filter:brightness(1.12)}
 .entry{border-top:1px solid var(--line);padding:14px 0}
-.entry:first-child{border-top:0}
 .entry strong{font-size:16px}
 .entry p{margin:7px 0;color:var(--muted);line-height:1.5}
 .entry select{margin-top:8px}
@@ -34,91 +33,144 @@ button:hover{filter:brightness(1.12)}
 .notice{background:#282719;border:1px solid #71602b;color:#f6d98e;padding:13px;border-radius:9px;margin-bottom:20px;line-height:1.5}
 .empty{color:var(--muted);padding:12px 0}
 footer{text-align:center;color:var(--muted);padding:25px}
+.hidden{display:none!important}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at top,#203b5c,#101722 65%)}
+.login-card{width:100%;max-width:430px;background:#192433;border:1px solid #35465c;border-radius:18px;padding:28px;box-shadow:0 20px 70px #0005}
+.login-card h1{text-align:center;font-size:25px}
+.login-card .subtitle{text-align:center;color:var(--muted);line-height:1.5;margin-bottom:24px}
+.login-card label{display:block;margin:13px 0 7px;font-weight:bold}
+.login-card button{width:100%;margin-top:18px}
+.error{color:#ff9999;min-height:20px}
+.account{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;color:var(--muted);margin-bottom:18px}
+.secondary{background:#39495e}
 @media(max-width:760px){.layout{grid-template-columns:1fr}main{padding:16px 12px}}
 </style>
 </head>
 <body>
-<header>
-  <small>POLIZEI BRANDENBURG · ROLEPLAY</small>
-  <h1>🚓 Integrierte Leitstelle</h1>
-  <p>Fahrzeugübersicht · Einsatzverwaltung · Funkstatus</p>
-</header>
-<main>
-  <div class="notice">
-    <strong>Vorschau-Modus:</strong> Einträge werden aktuell nur in dieser geöffneten Seite gehalten. Eine gemeinsame Online-Synchronisierung wird im nächsten Schritt eingerichtet. Bitte ausschließlich fiktive RP-Daten verwenden.
-  </div>
-  <section class="stats">
-    <div class="stat"><span>Alle Streifen</span><strong id="total">0</strong></div>
-    <div class="stat"><span>Verfügbar</span><strong id="ready">0</strong></div>
-    <div class="stat"><span>Im Einsatz</span><strong id="active">0</strong></div>
-    <div class="stat"><span>Offene Einsätze</span><strong id="open">0</strong></div>
-  </section>
-  <div class="layout">
-    <section class="panel">
-      <h2>🚔 Streifenverwaltung</h2>
-      <form id="unitForm">
-        <input id="unitNo" placeholder="Dienstnummer, z. B. BB-01" required>
-        <select id="vehicle">
-          <option>Streifenwagen</option><option>Zivilfahrzeug</option>
-          <option>FuStW</option><option>Motorrad</option><option>Sonstiges</option>
-        </select>
-        <input id="plate" placeholder="Fiktives Kennzeichen">
-        <input id="crew" placeholder="Besatzung / RP-Namen">
-        <input id="location" placeholder="Standort">
-        <button type="submit">+ Streife anmelden</button>
-      </form>
-      <div id="units"><p class="empty">Noch keine Streifen angemeldet.</p></div>
+<section id="login" class="login-wrap">
+  <form id="loginForm" class="login-card">
+    <h1>🛡️ Polizei Brandenburg</h1>
+    <p class="subtitle">Digitale Leitstelle · Roleplay<br>Bitte melde dich zum Dienst an.</p>
+    <label for="rpName">RP-Name</label>
+    <input id="rpName" maxlength="60" placeholder="z. B. Max Mustermann" autocomplete="nickname" required>
+    <label for="dienstnummer">Dienstnummer</label>
+    <input id="dienstnummer" maxlength="20" placeholder="z. B. BB-01" required>
+    <p class="muted">Verwende nur fiktive RP-Angaben.</p>
+    <button type="submit">Zum Dienst anmelden</button>
+    <p id="loginError" class="error" role="alert"></p>
+  </form>
+</section>
+
+<div id="app" class="hidden">
+  <header>
+    <small>POLIZEI BRANDENBURG · ROLEPLAY</small>
+    <h1>🚓 Integrierte Leitstelle</h1>
+    <p>Fahrzeugübersicht · Einsatzverwaltung · Funkstatus</p>
+  </header>
+  <main>
+    <div class="account">
+      <span>Angemeldet als <strong id="accountName"></strong> · <strong id="accountNumber"></strong></span>
+      <button id="logout" class="secondary" type="button">Abmelden</button>
+    </div>
+    <div class="notice">
+      <strong>Vorschau-Modus:</strong> Die Anmeldedaten und Einträge sind noch nicht mit einem Benutzerkonto oder einer gemeinsamen Datenbank verbunden. Ein anderer Nutzer kann eine Dienstnummer derzeit ebenfalls eintragen.
+    </div>
+    <section class="stats">
+      <div class="stat"><span>Alle Streifen</span><strong id="total">0</strong></div>
+      <div class="stat"><span>Verfügbar</span><strong id="ready">0</strong></div>
+      <div class="stat"><span>Im Einsatz</span><strong id="active">0</strong></div>
+      <div class="stat"><span>Offene Einsätze</span><strong id="open">0</strong></div>
     </section>
-    <section class="panel">
-      <h2>📟 Einsatzverwaltung</h2>
-      <form id="incidentForm">
-        <input id="incidentType" placeholder="Einsatzart, z. B. Verkehrsunfall" required>
-        <input id="incidentPlace" placeholder="Einsatzort" required>
-        <select id="priority">
-          <option value="Mittel">Priorität: Mittel</option>
-          <option value="Hoch">Priorität: Hoch</option>
-          <option value="Niedrig">Priorität: Niedrig</option>
-        </select>
-        <textarea id="description" placeholder="Zusätzliche RP-Informationen (optional)"></textarea>
-        <button type="submit">+ Einsatz erstellen</button>
-      </form>
-      <div id="incidents"><p class="empty">Keine Einsätze vorhanden.</p></div>
-    </section>
-  </div>
-</main>
-<footer>Polizei Brandenburg RP · Fiktive Rollenspiel-Leitstelle</footer>
+    <div class="layout">
+      <section class="panel">
+        <h2>🚔 Streifenverwaltung</h2>
+        <form id="unitForm">
+          <input id="unitNo" placeholder="Dienstnummer, z. B. BB-01" required>
+          <select id="vehicle"><option>Streifenwagen</option><option>Zivilfahrzeug</option><option>FuStW</option><option>Motorrad</option><option>Sonstiges</option></select>
+          <input id="plate" placeholder="Fiktives Kennzeichen">
+          <input id="crew" placeholder="Besatzung / RP-Namen">
+          <input id="location" placeholder="Standort">
+          <button type="submit">+ Streife anmelden</button>
+        </form>
+        <div id="units"><p class="empty">Noch keine Streifen angemeldet.</p></div>
+      </section>
+      <section class="panel">
+        <h2>📟 Einsatzverwaltung</h2>
+        <form id="incidentForm">
+          <input id="incidentType" placeholder="Einsatzart, z. B. Verkehrsunfall" required>
+          <input id="incidentPlace" placeholder="Einsatzort" required>
+          <select id="priority"><option value="Mittel">Priorität: Mittel</option><option value="Hoch">Priorität: Hoch</option><option value="Niedrig">Priorität: Niedrig</option></select>
+          <textarea id="description" placeholder="Zusätzliche RP-Informationen (optional)"></textarea>
+          <button type="submit">+ Einsatz erstellen</button>
+        </form>
+        <div id="incidents"><p class="empty">Keine Einsätze vorhanden.</p></div>
+      </section>
+    </div>
+  </main>
+  <footer>Polizei Brandenburg RP · Fiktive Rollenspiel-Leitstelle</footer>
+</div>
+
 <script>
 const units=[];
 const incidents=[];
 let nextIncident=1;
 const $=id=>document.getElementById(id);
+let currentUser=null;
+
 function safe(value){
   const span=document.createElement("span");
-  span.textContent=value;
+  span.textContent=String(value??"");
   return span.innerHTML;
 }
+
+$("loginForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const name=$("rpName").value.trim();
+  const number=$("dienstnummer").value.trim().toUpperCase();
+  if(!name||!number){
+    $("loginError").textContent="Bitte RP-Name und Dienstnummer eingeben.";
+    return;
+  }
+  if(!/^[A-Z0-9-]{2,20}$/.test(number)){
+    $("loginError").textContent="Die Dienstnummer darf Buchstaben, Zahlen und Bindestriche enthalten.";
+    return;
+  }
+  currentUser={name,number};
+  $("accountName").textContent=name;
+  $("accountNumber").textContent=number;
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("loginError").textContent="";
+});
+
+$("logout").addEventListener("click",()=>{
+  currentUser=null;
+  $("rpName").value="";
+  $("dienstnummer").value="";
+  $("app").classList.add("hidden");
+  $("login").classList.remove("hidden");
+});
+
 function update(){
   $("total").textContent=units.length;
   $("ready").textContent=units.filter(u=>u.status==="Bereit").length;
   $("active").textContent=units.filter(u=>u.status==="Im Einsatz").length;
   $("open").textContent=incidents.filter(i=>i.status!=="Abgeschlossen").length;
+
   $("units").innerHTML=units.length?units.map((u,i)=>`
     <div class="entry">
       <strong>${safe(u.no)} · ${safe(u.vehicle)}</strong>
-      <p>Kennzeichen: ${safe(u.plate||"–")}<br>
-      Besatzung: ${safe(u.crew||"–")}<br>
-      Standort: ${safe(u.location||"–")}</p>
+      <p>Kennzeichen: ${safe(u.plate||"–")}<br>Besatzung: ${safe(u.crew||"–")}<br>Standort: ${safe(u.location||"–")}<br>Angemeldet von: ${safe(u.owner)}</p>
       <select aria-label="Status ${safe(u.no)}" onchange="setUnitStatus(${i},this.value)">
         ${["Bereit","Auf Anfahrt","Im Einsatz","Außer Dienst"].map(s=>`<option ${u.status===s?"selected":""}>${s}</option>`).join("")}
       </select>
     </div>`).join(""):'<p class="empty">Noch keine Streifen angemeldet.</p>';
+
   $("incidents").innerHTML=incidents.length?incidents.map((inc,i)=>`
     <div class="entry">
       <strong>#${inc.id} · ${safe(inc.type)}</strong>
-      <p>Ort: ${safe(inc.place)}<br>
-      Priorität: <span class="pill">${safe(inc.priority)}</span><br>
-      Info: ${safe(inc.description||"Keine zusätzlichen Angaben")}</p>
-      <select aria-label="Zugewiesene Streife für Einsatz ${inc.id}" onchange="assignUnit(${i},this.value)">
+      <p>Ort: ${safe(inc.place)}<br>Priorität: <span class="pill">${safe(inc.priority)}</span><br>Info: ${safe(inc.description||"Keine zusätzlichen Angaben")}</p>
+      <select aria-label="Streife für Einsatz ${inc.id}" onchange="assignUnit(${i},this.value)">
         <option value="">Keine Streife zugewiesen</option>
         ${units.map((u,j)=>`<option value="${j}" ${inc.unit===j?"selected":""}>${safe(u.no)} · ${safe(u.vehicle)}</option>`).join("")}
       </select>
@@ -127,23 +179,34 @@ function update(){
       </select>
     </div>`).join(""):'<p class="empty">Keine Einsätze vorhanden.</p>';
 }
+
 $("unitForm").addEventListener("submit",e=>{
   e.preventDefault();
-  const no=$("unitNo").value.trim();
+  if(!currentUser)return;
+  const no=$("unitNo").value.trim().toUpperCase();
   if(units.some(u=>u.no.toLowerCase()===no.toLowerCase())){
-    alert("Diese Dienstnummer ist bereits vorhanden.");return;
+    alert("Diese Dienstnummer ist bereits angemeldet.");return;
   }
-  units.push({no,vehicle:$("vehicle").value,plate:$("plate").value.trim(),
-    crew:$("crew").value.trim(),location:$("location").value.trim(),status:"Bereit"});
+  units.push({
+    no,vehicle:$("vehicle").value,plate:$("plate").value.trim(),
+    crew:$("crew").value.trim()||currentUser.name,
+    location:$("location").value.trim(),status:"Bereit",
+    owner:currentUser.name
+  });
   e.target.reset();update();
 });
+
 $("incidentForm").addEventListener("submit",e=>{
   e.preventDefault();
-  incidents.unshift({id:nextIncident++,type:$("incidentType").value.trim(),
+  if(!currentUser)return;
+  incidents.unshift({
+    id:nextIncident++,type:$("incidentType").value.trim(),
     place:$("incidentPlace").value.trim(),priority:$("priority").value,
-    description:$("description").value.trim(),status:"Offen",unit:null});
+    description:$("description").value.trim(),status:"Offen",unit:null
+  });
   e.target.reset();update();
 });
+
 function setUnitStatus(i,status){units[i].status=status;update();}
 function assignUnit(i,value){
   incidents[i].unit=value===""?null:Number(value);
